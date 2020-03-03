@@ -1,3 +1,6 @@
 .idea
 /Datasets/realdonaldtrump.ndjson
 /Datasets/trumptweets.json
+/Datasets/combined_dataset.csv
+/Datasets/combined_dataset.json
+/Datasets/realdonaldtrump.json
