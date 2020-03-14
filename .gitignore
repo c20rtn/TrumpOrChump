@@ -1,2 +1,5 @@
 .idea
-/Datasets/*[.ndjson,.json,.csv]
+/Datasets/Full
+/Datasets/General Tweets
+/Datasets/Trump Tweets
+/Datasets/Datasets.zip
