@@ -1,10 +1,9 @@
 import pandas as pd
+import feature_extraction
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import train_test_split
-import re
 
-regex = re.compile('[^\W]\S+[^\W]|\w\w|\w')
 
 def average_word_length(sentence):
     words = regex.findall(sentence)
@@ -57,25 +56,7 @@ y_test.reset_index(inplace=True, drop=True)
 # for i, row in X_train.iterrows():
 #     X_train.at[i, 'Term Frequencies'] = tf[i]
 
-# get all tweet sources as a list
-tweet_sources = list(X_train['source'].unique())
-# get the index of the tweet source from the list and store it in the 'source' column
-X_train = X_train.assign(source=X_train['source'].apply(lambda x: tweet_sources.index(x)))
-
-# get the length of each tweet and store it in the 'length' column
-X_train = X_train.assign(length=X_train['text'].apply(len))
-
-# get the number of hashtags used in the tweet and store it in the 'no_hashtags' column
-X_train = X_train.assign(no_hashtags=X_train['hashtags'].apply(len))
-
-# get the number of user mentions used in the tweet and store it in the 'no_mentions' column
-X_train = X_train.assign(no_mentions=X_train['user_mentions'].apply(len))
-
-# get the number of media items used in the tweet and store it in the 'no_media' column
-X_train = X_train.assign(no_media=X_train['media'].apply(media_length))
-
-# get the average length of the words in the tweet and store it in the 'avg_word_length' column
-X_train = X_train.assign(avg_word_length=X_train['text'].apply(average_word_length))
+X_train = feature_extraction.extract_features(X_train)
 
 print(X_train.head(5))
 
