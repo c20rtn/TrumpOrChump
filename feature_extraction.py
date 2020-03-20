@@ -15,6 +15,14 @@ def media_length(x):
         return len(x)
 
 
+def create_column_with_text_without_mentions(dataset):
+    return dataset.assign(text_without_mentions=dataset['text'].apply(remove_mentions))
+
+
+def remove_mentions(text):
+    return re.sub(pattern='@\w+', string=text, repl="")
+
+
 def extract_features(dataset):
     # get all tweet sources as a list
     tweet_sources = list(dataset['source'].unique())
@@ -36,7 +44,34 @@ def extract_features(dataset):
     # get the average length of the words in the tweet and store it in the 'avg_word_length' column
     dataset = dataset.assign(avg_word_length=dataset['text'].apply(average_word_length))
 
-    # dataset = dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
-    dataset = dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
+    if 'text_without_mentions' in dataset.columns:
+        dataset = dataset.assign(
+            avg_word_length_without_mentions=dataset['text_without_mentions'].apply(average_word_length))
 
-    return dataset
+        dataset = dataset.assign(length_without_mentions=dataset['text_without_mentions'].apply(len))
+
+        return dataset[['is_quote_status', 'source', 'no_hashtags', 'no_mentions', 'no_media'
+            , 'avg_word_length_without_mentions', 'length_without_mentions']]
+
+    # dataset = dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
+
+    return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
+
+
+def extract_text_features(X_train, X_test, column_name):
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.feature_extraction.text import TfidfTransformer
+    # https://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
+
+    # preprocess, tokenize and filter stopwords and produce bag of words from tweet text
+    # produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
+    count_vect = CountVectorizer()
+    counts = count_vect.fit_transform(X_train[column_name])
+
+    # divides occurrences by number of words in tweet
+    tfidf_transformer = TfidfTransformer(use_idf=False)
+
+    X_train_tf = tfidf_transformer.fit_transform(counts)
+    X_test_tf = tfidf_transformer.transform(count_vect.transform(X_test[column_name]))
+
+    return X_train_tf, X_test_tf

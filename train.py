@@ -26,23 +26,13 @@ X_test.reset_index(inplace=True, drop=True)
 y_train.reset_index(inplace=True, drop=True)
 y_test.reset_index(inplace=True, drop=True)
 
+# REMOVE MENTIONS FROM TEXT
+X_train = feature_extraction.create_column_with_text_without_mentions(X_train)
+X_test = feature_extraction.create_column_with_text_without_mentions(X_test)
 
 # TEXT EXTRACTION
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-# https://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
-
-# preprocess, tokenize and filter stopwords and produce bag of words from tweet text
-# produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
-count_vect = CountVectorizer()
-counts = count_vect.fit_transform(X_train['text'])
-
-# divides occurrences by number of words in tweet
-tfidf_transformer = TfidfTransformer(use_idf=False)
-
-X_train_tf = tfidf_transformer.fit_transform(counts)
-X_test_tf = tfidf_transformer.transform(count_vect.transform(X_test['text']))
-
+X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text')
+# X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text_without_mentions')
 
 # EXTRACT FEATURES
 X_train = feature_extraction.extract_features(X_train)
@@ -63,7 +53,6 @@ from scipy import sparse
 
 joined_train = sparse.hstack([X_train_tf, sparse.csr_matrix(X_train)])
 joined_test = sparse.hstack([X_test_tf, sparse.csr_matrix(X_test)])
-
 
 # RUN TRAINING
 import models
