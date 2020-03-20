@@ -44,6 +44,7 @@ def extract_features(dataset):
     # get the average length of the words in the tweet and store it in the 'avg_word_length' column
     dataset = dataset.assign(avg_word_length=dataset['text'].apply(average_word_length))
 
+    # get the length of each tweet and thr average word length without mentions
     if 'text_without_mentions' in dataset.columns:
         dataset = dataset.assign(
             avg_word_length_without_mentions=dataset['text_without_mentions'].apply(average_word_length))
@@ -52,8 +53,6 @@ def extract_features(dataset):
 
         return dataset[['is_quote_status', 'source', 'no_hashtags', 'no_mentions', 'no_media'
             , 'avg_word_length_without_mentions', 'length_without_mentions']]
-
-    # dataset = dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
 
     return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
 

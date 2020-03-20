@@ -1,14 +1,16 @@
 import pandas as pd
 import feature_extraction
 from sklearn.model_selection import train_test_split
+import data_cleansing
 
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
 
 # LOAD DATA
 # read in individual datasets
-trump_tweets = pd.read_json("Datasets/trump_tweets.json")
-general_tweets = pd.read_json("Datasets/general_tweets.json")
+trump_created = data_cleansing.cleanse_data_with_created_at(pd.read_json("Datasets/Full/trump_tweets_full.json"))
+trump_tweets = data_cleansing.cleanse_data(trump_created[trump_created['created_at'] > '2017-11-07 00:00:00'])
+general_tweets = pd.read_json("Datasets/general_tweets.json").sample(n=len(trump_tweets))
 
 # label the datasets
 trump_tweets['label'] = 1
@@ -19,6 +21,8 @@ dataset = pd.DataFrame()
 dataset = dataset.append(trump_tweets)
 dataset = dataset.append(general_tweets)
 
+
+
 # split dataset into train and test datasets
 X_train, X_test, y_train, y_test = train_test_split(dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text', 'hashtags', 'symbols', 'user_mentions', 'media']], dataset['label'], test_size=0.20)
 X_train.reset_index(inplace=True, drop=True)
@@ -27,14 +31,21 @@ y_train.reset_index(inplace=True, drop=True)
 y_test.reset_index(inplace=True, drop=True)
 
 
-# REMOVE MENTIONS FROM TEXT
-X_train = feature_extraction.create_column_with_text_without_mentions(X_train)
-X_test = feature_extraction.create_column_with_text_without_mentions(X_test)
-
-
 # TEXT EXTRACTION
-X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text')
-# X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text_without_mentions')
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+# https://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
+
+# preprocess, tokenize and filter stopwords and produce bag of words from tweet text
+# produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
+count_vect = CountVectorizer()
+counts = count_vect.fit_transform(X_train['text'])
+
+# divides occurrences by number of words in tweet
+tfidf_transformer = TfidfTransformer(use_idf=False)
+
+X_train_tf = tfidf_transformer.fit_transform(counts)
+X_test_tf = tfidf_transformer.transform(count_vect.transform(X_test['text']))
 
 
 # EXTRACT FEATURES
@@ -56,6 +67,7 @@ from scipy import sparse
 
 joined_train = sparse.hstack([X_train_tf, sparse.csr_matrix(X_train)])
 joined_test = sparse.hstack([X_test_tf, sparse.csr_matrix(X_test)])
+
 
 # RUN TRAINING
 import models

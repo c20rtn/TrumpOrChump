@@ -3,15 +3,34 @@ import re
 
 def cleanse_data(dataset):
     # remove all non-english tweets
-    dataset = dataset[dataset.lang == "en"]
+    if 'lang' in dataset.columns:
+        dataset = dataset[dataset.lang == "en"]
     # remove all tweets withheld for copyright purposes
     if 'withheld_copyright' in dataset.columns:
         dataset = dataset[dataset.withheld_copyright != 1]
+    # remove deleted tweets
     if 'delete' in dataset.columns:
         dataset = dataset[dataset.delete.isna()]
 
     filtered_dataset = dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text', 'hashtags',
                                 'symbols', 'user_mentions', 'media']]
+
+    return filtered_dataset
+
+
+def cleanse_data_with_created_at(dataset):
+    # remove all non-english tweets
+    if 'lang' in dataset.columns:
+        dataset = dataset[dataset.lang == "en"]
+    # remove all tweets withheld for copyright purposes
+    if 'withheld_copyright' in dataset.columns:
+        dataset = dataset[dataset.withheld_copyright != 1]
+    # remove deleted tweets
+    if 'delete' in dataset.columns:
+        dataset = dataset[dataset.delete.isna()]
+
+    filtered_dataset = dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text', 'hashtags',
+                                'symbols', 'user_mentions', 'media', 'created_at']]
 
     return filtered_dataset
 
