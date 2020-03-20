@@ -1,12 +1,14 @@
 import re
+import collections
+import string
 
-regex = re.compile('[^\W]\S+[^\W]|\w\w|\w')
+words_regex = re.compile('[^\W]\S+[^\W]|\w\w|\w')
+punctuation_regex = re.compile('[^\w #]')
 
 
 def average_word_length(sentence):
-    words = regex.findall(sentence)
+    words = words_regex.findall(sentence)
     return sum(len(word) for word in words) / len(words)
-
 
 def media_length(x):
     if x is None:
@@ -14,14 +16,22 @@ def media_length(x):
     else:
         return len(x)
 
-
 def create_column_with_text_without_mentions(dataset):
     return dataset.assign(text_without_mentions=dataset['text'].apply(remove_mentions))
-
 
 def remove_mentions(text):
     return re.sub(pattern='@\w+', string=text, repl="")
 
+def count_each_punctuation(text):
+    counts = collections.Counter(text)
+    val = {k: v for k, v in counts.items() if k in string.punctuation}
+    print(val)
+    return val
+
+def count_punctuation(text):
+    # text = text.encode('ascii', 'ignore').decode('ascii')
+    punctuation = punctuation_regex.findall(text)
+    return len(punctuation)
 
 def extract_features(dataset):
     # get all tweet sources as a list
@@ -29,8 +39,6 @@ def extract_features(dataset):
     # get the index of the tweet source from the list and store it in the 'source' column
     dataset = dataset.assign(source=dataset['source'].apply(lambda x: tweet_sources.index(x)))
 
-    # get the length of each tweet and store it in the 'length' column
-    dataset = dataset.assign(length=dataset['text'].apply(len))
 
     # get the number of hashtags used in the tweet and store it in the 'no_hashtags' column
     dataset = dataset.assign(no_hashtags=dataset['hashtags'].apply(len))
@@ -41,20 +49,28 @@ def extract_features(dataset):
     # get the number of media items used in the tweet and store it in the 'no_media' column
     dataset = dataset.assign(no_media=dataset['media'].apply(media_length))
 
-    # get the average length of the words in the tweet and store it in the 'avg_word_length' column
-    dataset = dataset.assign(avg_word_length=dataset['text'].apply(average_word_length))
-
     # get the length of each tweet and thr average word length without mentions
     if 'text_without_mentions' in dataset.columns:
         dataset = dataset.assign(
-            avg_word_length_without_mentions=dataset['text_without_mentions'].apply(average_word_length))
+            avg_word_length=dataset['text_without_mentions'].apply(average_word_length))
 
-        dataset = dataset.assign(length_without_mentions=dataset['text_without_mentions'].apply(len))
+        dataset = dataset.assign(length=dataset['text_without_mentions'].apply(len))
 
-        return dataset[['is_quote_status', 'source', 'no_hashtags', 'no_mentions', 'no_media'
-            , 'avg_word_length_without_mentions', 'length_without_mentions']]
+        dataset = dataset.assign(no_punctuation=dataset['text_without_mentions'].apply(count_punctuation))
+    else:
 
-    return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length']]
+        # get the average length of the words in the tweet and store it in the 'avg_word_length' column
+        dataset = dataset.assign(avg_word_length=dataset['text'].apply(average_word_length))
+
+        # get the number of punctuation in the text
+        dataset = dataset.assign(no_punctuation=dataset['text'].apply(count_punctuation))
+
+        # get the length of each tweet and store it in the 'length' column
+        dataset = dataset.assign(length=dataset['text'].apply(len))
+
+    # print(dataset.sort_values(by='no_punctuation',ascending=False)['text_without_mentions'])
+
+    return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
 
 
 def extract_text_features(X_train, X_test, column_name):

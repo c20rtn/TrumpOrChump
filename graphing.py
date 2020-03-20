@@ -20,6 +20,9 @@ dataset = pd.DataFrame()
 dataset = dataset.append(trump_tweets)
 dataset = dataset.append(general_tweets)
 
+trump_features = feature_extraction.extract_features(feature_extraction.create_column_with_text_without_mentions(trump_tweets))
+chump_features = feature_extraction.extract_features(feature_extraction.create_column_with_text_without_mentions(general_tweets))
+
 # trump_created = data_cleansing.cleanse_data_with_created_at(pd.read_json("Datasets/Full/trump_tweets_full.json"))
 # print(trump_created)
 # print(type(trump_created.iloc[0]['created_at']))
@@ -49,11 +52,12 @@ dataset = dataset.append(general_tweets)
 # plt.boxplot(x=[feature_extraction.extract_features(trump_tweets)['no_hashtags'], feature_extraction.extract_features(general_tweets)['no_hashtags']], vert=False, labels=["Trump", "Chump"])
 
 # number of hashtags histogram
-plt.hist(x=feature_extraction.extract_features(trump_tweets)['no_hashtags'], bins=range(25), color='#FF00007F', log=True)
-plt.hist(x=feature_extraction.extract_features(general_tweets)['no_hashtags'], bins=range(25), color='#0000FF7F', log=True)
+# plt.hist(x=feature_extraction.extract_features(trump_tweets)['no_hashtags'], bins=range(25), color='#FF00007F', log=True)
+# plt.hist(x=feature_extraction.extract_features(general_tweets)['no_hashtags'], bins=range(25), color='#0000FF7F', log=True)
 
 # number of mentions boxplots
 # plt.boxplot(x=[feature_extraction.extract_features(trump_tweets)['no_mentions'], feature_extraction.extract_features(general_tweets)['no_mentions']], vert=False, labels=["Trump", "Chump"])
+plt.boxplot(x=[trump_features['no_punctuation'], chump_features['no_punctuation']], vert=False, labels=["Trump", "Chump"])
 
 # number of mentions histogram
 # plt.hist(x=feature_extraction.extract_features(trump_tweets)['no_mentions'], bins=range(50), color='#FF00007F', log=True)
