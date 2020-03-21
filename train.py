@@ -1,5 +1,5 @@
 import pandas as pd
-import feature_extraction
+from feature_extraction import extract_features, extract_text_features, create_column_with_text_without_mentions
 from sklearn.model_selection import train_test_split
 import numpy as np
 
@@ -33,18 +33,18 @@ for i in range(5):
 
 
     # REMOVE MENTIONS FROM TEXT
-    X_train = feature_extraction.create_column_with_text_without_mentions(X_train)
-    X_test = feature_extraction.create_column_with_text_without_mentions(X_test)
+    X_train = create_column_with_text_without_mentions(X_train)
+    X_test = create_column_with_text_without_mentions(X_test)
 
 
     # TEXT EXTRACTION
-    X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text')
+    X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text')
     # X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text_without_mentions')
 
 
     # EXTRACT FEATURES
-    X_train = feature_extraction.extract_features(X_train)
-    X_test = feature_extraction.extract_features(X_test)
+    X_train = extract_features(X_train)
+    X_test = extract_features(X_test)
 
 
     # DATA SCALING
@@ -63,14 +63,14 @@ for i in range(5):
     joined_test = sparse.hstack([X_test_tf, sparse.csr_matrix(X_test)])
 
     # RUN TRAINING
-    import models
+    from models import logistic_regression, naive_bayes, svm, mlp
 
-    model = models.logistic_regression(joined_train, y_train)
-    # model = models.naive_bayes(X_train, y_train)
-    # model = models.svm(joined_train, y_train)
-    # model = models.mlp(joined_train, y_train)
+    # model = logistic_regression(joined_train, y_train)
+    model = naive_bayes(X_train, y_train)
+    # model = svm(joined_train, y_train)
+    # model = mlp(joined_train, y_train)
 
-    y_pred = model.predict(joined_test)
+    y_pred = model.predict(X_test)
 
 
     # ACCURACY MEASURES

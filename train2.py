@@ -1,15 +1,15 @@
 import pandas as pd
-import feature_extraction
+from feature_extraction import extract_features, extract_text_features
 from sklearn.model_selection import train_test_split
-import data_cleansing
+from data_cleansing import cleanse_data, cleanse_data_with_created_at
 
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
 
 # LOAD DATA
 # read in individual datasets
-trump_created = data_cleansing.cleanse_data_with_created_at(pd.read_json("Datasets/Full/trump_tweets_full.json"))
-trump_tweets = data_cleansing.cleanse_data(trump_created[trump_created['created_at'] > '2017-11-07 00:00:00'])
+trump_created = cleanse_data_with_created_at(pd.read_json("Datasets/Full/trump_tweets_full.json"))
+trump_tweets = cleanse_data(trump_created[trump_created['created_at'] > '2017-11-07 00:00:00'])
 general_tweets = pd.read_json("Datasets/general_tweets.json").sample(n=len(trump_tweets))
 
 # label the datasets
@@ -32,13 +32,13 @@ y_test.reset_index(inplace=True, drop=True)
 
 
 # TEXT EXTRACTION
-X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text')
-# X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text_without_mentions')
+X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text')
+# X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text_without_mentions')
 
 
 # EXTRACT FEATURES
-X_train = feature_extraction.extract_features(X_train)
-X_test = feature_extraction.extract_features(X_test)
+X_train = extract_features(X_train)
+X_test = extract_features(X_test)
 
 
 # DATA SCALING
@@ -58,12 +58,12 @@ joined_test = sparse.hstack([X_test_tf, sparse.csr_matrix(X_test)])
 
 
 # RUN TRAINING
-import models
+from models import logistic_regression, naive_bayes, svm, mlp
 
-model = models.logistic_regression(joined_train, y_train)
-# model = models.naive_bayes(X_train, y_train)
-# model = models.svm(joined_train, y_train)
-# model = models.mlp(joined_train, y_train)
+model = logistic_regression(joined_train, y_train)
+# model = naive_bayes(X_train, y_train)
+# model = svm(joined_train, y_train)
+# model = mlp(joined_train, y_train)
 
 y_pred = model.predict(joined_test)
 
