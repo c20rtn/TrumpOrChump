@@ -24,6 +24,7 @@ accuracies = []
 cms = []
 
 for i in range(5):
+    print("Training loop ", i)
     # split dataset into train and test datasets
     X_train, X_test, y_train, y_test = train_test_split(dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text', 'hashtags', 'symbols', 'user_mentions', 'media']], dataset['label'], test_size=0.20)
     X_train.reset_index(inplace=True, drop=True)
@@ -65,11 +66,13 @@ for i in range(5):
     # RUN TRAINING
     from models import logistic_regression, naive_bayes, svm, mlp
 
+    print("Instantiate model")
     model = logistic_regression(joined_train, y_train)
     # model = naive_bayes(X_train, y_train)
     # model = svm(joined_train, y_train)
     # model = mlp(joined_train, y_train)
 
+    print("Predict model")
     y_pred = model.predict(joined_test)
     # y_pred_proba = model.predict_proba(joined_test)
     # print(y_pred_proba)

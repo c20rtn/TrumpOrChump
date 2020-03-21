@@ -26,5 +26,11 @@ def svm(X_train, y_train):
 def mlp(X_train, y_train):
     from sklearn.neural_network import MLPClassifier
 
-    mlp_model = MLPClassifier(random_state=0)
+    mlp_model = MLPClassifier(random_state=0,
+                            solver='lbfgs',
+                            hidden_layer_sizes=(5, 2),
+                            tol = 1e-4,
+                            activation = 'relu',
+                            max_iter = 200
+                            )
     return mlp_model.fit(X_train, y_train)
