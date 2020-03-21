@@ -22,6 +22,15 @@ def svm(X_train, y_train):
     return svc_model.fit(X_train, y_train)
 
 
+def calibrated_classifier(X_train, y_train):
+    from sklearn.svm import LinearSVC
+    from sklearn.calibration import CalibratedClassifierCV
+
+    svc_model = LinearSVC(random_state=0, tol=1e-03, max_iter=5000)
+    cc = CalibratedClassifierCV(svc_model)
+    return cc.fit(X_train, y_train)
+
+
 # MLP
 def mlp(X_train, y_train):
     from sklearn.neural_network import MLPClassifier
