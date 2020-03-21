@@ -35,12 +35,11 @@ def count_punctuation(text, emojis=True):
     punctuation = punctuation_regex.findall(text)
     return len(punctuation)
 
-def extract_features(dataset):
+def extract_features(dataset, drop_length=True):
     # get all tweet sources as a list
     tweet_sources = list(dataset['source'].unique())
     # get the index of the tweet source from the list and store it in the 'source' column
     dataset = dataset.assign(source=dataset['source'].apply(lambda x: tweet_sources.index(x)))
-
 
     # get the number of hashtags used in the tweet and store it in the 'no_hashtags' column
     dataset = dataset.assign(no_hashtags=dataset['hashtags'].apply(len))
@@ -65,19 +64,17 @@ def extract_features(dataset):
     # get the length of each tweet and store it in the 'length' column
     dataset = dataset.assign(length=dataset[text_column].apply(len))
 
-    # get the
+    # get the count of each punctuation character and store it in a separate column per character
     dataset = dataset.join(dataset[text_column].apply(count_each_punctuation).apply(pd.Series).fillna(0))
 
-    # print(dataset.sort_values(by='no_punctuation',ascending=False)['text_without_mentions'])
+    # columns that should be kept [['is_quote_status', 'source', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
+    columns_to_drop=['favorite_count', 'retweet_count', 'text', 'text_without_mentions', 'user_mentions', 'media', 'hashtags', 'symbols']
 
-    # 'favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text',
-    #        'hashtags', 'symbols', 'user_mentions', 'media',
-    #        'text_without_mentions', 'no_hashtags', 'no_mentions', 'no_media',
-    #        'avg_word_length', 'no_punctuation', 'length'
-    # print(dataset.columns)
+    if drop_length:
+        columns_to_drop.append('length')
 
-    # return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
-    return dataset.drop(columns=['favorite_count', 'retweet_count', 'text', 'text_without_mentions', 'user_mentions', 'media', 'hashtags', 'symbols', 'length'])
+    return dataset.drop(columns=columns_to_drop)
+
 
 def extract_text_features(X_train, X_test, column_name):
     from sklearn.feature_extraction.text import CountVectorizer
