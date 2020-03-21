@@ -84,6 +84,7 @@ def extract_text_features(X_train, X_test, column_name):
     from sklearn.feature_extraction.text import TfidfTransformer
     import nltk
     from nltk import word_tokenize
+    from nltk.corpus import stopwords
     from nltk.stem import WordNetLemmatizer
     import ssl
 
@@ -94,24 +95,30 @@ def extract_text_features(X_train, X_test, column_name):
     else:
         ssl._create_default_https_context = _create_unverified_https_context
 
+    # nltk.download('stopwords')
     # nltk.download('punkt')
     # nltk.download('wordnet')
     # https://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
 
     # preprocess, tokenize and filter stopwords and produce bag of words from tweet text
     # produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
+    
+    print("Setting stopwords")
+    stopWords = set(stopwords.words('english'))
+    
     class LemmaTokenizer(object):
         def __init__(self):
             self.wnl = WordNetLemmatizer()
 
         def __call__(self, articles):
-            return [self.wnl.lemmatize(t) for t in word_tokenize(articles)]
+            return [self.wnl.lemmatize(t) for t in word_tokenize(articles) if t not in stopWords]
 
+    print("Count Vectorizer")
     count_vect = CountVectorizer(
-                                 tokenizer=LemmaTokenizer(),
-                                 strip_accents='unicode',
-                                 stop_words='english',
-                                 lowercase=True
+                                tokenizer=LemmaTokenizer(),
+                                strip_accents='unicode',
+                                #stop_words='english',
+                                lowercase=True
     )
     counts = count_vect.fit_transform(X_train[column_name])
 
