@@ -24,7 +24,7 @@ accuracies = []
 cms = []
 
 for i in range(5):
-    print("Training loop ", i)
+    print("Run:", i + 1)
     # split dataset into train and test datasets
     X_train, X_test, y_train, y_test = train_test_split(dataset[['favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text', 'hashtags', 'symbols', 'user_mentions', 'media']], dataset['label'], test_size=0.20)
     X_train.reset_index(inplace=True, drop=True)
@@ -39,8 +39,8 @@ for i in range(5):
 
 
     # TEXT EXTRACTION
-    X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text')
-    # X_train_tf, X_test_tf = feature_extraction.extract_text_features(X_train, X_test, 'text_without_mentions')
+    X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text', False)
+    # X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text_without_mentions')
 
 
     # EXTRACT FEATURES
@@ -83,14 +83,14 @@ for i in range(5):
 
     accuracy = accuracy_score(y_test, y_pred)
     accuracies.append(accuracy)
-    # print(accuracy)
+    print("Accuracy:", accuracy, '\n')
     cm = confusion_matrix(y_test, y_pred)
     cms.append(cm)
     # print(cm)
 
-print(cms)
-print(accuracies)
-print(np.average(accuracies))
+# print(cms)
+# print(accuracies)
+print("Average accuracy:", np.average(accuracies))
 
 pd.reset_option('display.max_colwidth')
 pd.reset_option('display.max_columns')
