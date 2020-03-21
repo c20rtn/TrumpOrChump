@@ -65,8 +65,8 @@ for i in range(5):
     # RUN TRAINING
     from models import logistic_regression, naive_bayes, svm, mlp
 
-    # model = logistic_regression(joined_train, y_train)
-    model = naive_bayes(X_train, y_train)
+    model = logistic_regression(joined_train, y_train)
+    # model = naive_bayes(X_train, y_train)
     # model = svm(joined_train, y_train)
     # model = mlp(joined_train, y_train)
 

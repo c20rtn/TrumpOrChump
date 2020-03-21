@@ -1,6 +1,7 @@
 import re
 import collections
 import string
+import pandas as pd
 
 words_regex = re.compile('[^\W]\S+[^\W]|\w\w|\w')
 punctuation_regex = re.compile('[^\w #]')
@@ -25,11 +26,12 @@ def remove_mentions(text):
 def count_each_punctuation(text):
     counts = collections.Counter(text)
     val = {k: v for k, v in counts.items() if k in string.punctuation}
-    print(val)
+    # print(val)
     return val
 
-def count_punctuation(text):
-    # text = text.encode('ascii', 'ignore').decode('ascii')
+def count_punctuation(text, emojis=True):
+    if not emojis:
+        text = text.encode('ascii', 'ignore').decode('ascii')
     punctuation = punctuation_regex.findall(text)
     return len(punctuation)
 
@@ -49,29 +51,33 @@ def extract_features(dataset):
     # get the number of media items used in the tweet and store it in the 'no_media' column
     dataset = dataset.assign(no_media=dataset['media'].apply(media_length))
 
-    # get the length of each tweet and thr average word length without mentions
+    text_column = 'text'
+
     if 'text_without_mentions' in dataset.columns:
-        dataset = dataset.assign(
-            avg_word_length=dataset['text_without_mentions'].apply(average_word_length))
+        text_column = 'text_without_mentions'
 
-        dataset = dataset.assign(length=dataset['text_without_mentions'].apply(len))
+    # get the average length of the words in the tweet and store it in the 'avg_word_length' column
+    dataset = dataset.assign(avg_word_length=dataset[text_column].apply(average_word_length))
 
-        dataset = dataset.assign(no_punctuation=dataset['text_without_mentions'].apply(count_punctuation))
-    else:
+    # get the number of punctuation in the text
+    dataset = dataset.assign(no_punctuation=dataset[text_column].apply(count_punctuation))
 
-        # get the average length of the words in the tweet and store it in the 'avg_word_length' column
-        dataset = dataset.assign(avg_word_length=dataset['text'].apply(average_word_length))
+    # get the length of each tweet and store it in the 'length' column
+    dataset = dataset.assign(length=dataset[text_column].apply(len))
 
-        # get the number of punctuation in the text
-        dataset = dataset.assign(no_punctuation=dataset['text'].apply(count_punctuation))
-
-        # get the length of each tweet and store it in the 'length' column
-        dataset = dataset.assign(length=dataset['text'].apply(len))
+    # get the
+    dataset = dataset.join(dataset[text_column].apply(count_each_punctuation).apply(pd.Series).fillna(0))
 
     # print(dataset.sort_values(by='no_punctuation',ascending=False)['text_without_mentions'])
 
-    return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
+    # 'favorite_count', 'is_quote_status', 'retweet_count', 'source', 'text',
+    #        'hashtags', 'symbols', 'user_mentions', 'media',
+    #        'text_without_mentions', 'no_hashtags', 'no_mentions', 'no_media',
+    #        'avg_word_length', 'no_punctuation', 'length'
+    # print(dataset.columns)
 
+    # return dataset[['is_quote_status', 'source', 'length', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
+    return dataset.drop(columns=['favorite_count', 'retweet_count', 'text', 'text_without_mentions', 'user_mentions', 'media', 'hashtags', 'symbols', 'length'])
 
 def extract_text_features(X_train, X_test, column_name):
     from sklearn.feature_extraction.text import CountVectorizer
