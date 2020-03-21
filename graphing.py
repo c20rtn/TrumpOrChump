@@ -57,7 +57,10 @@ chump_features = feature_extraction.extract_features(feature_extraction.create_c
 
 # number of mentions boxplots
 # plt.boxplot(x=[feature_extraction.extract_features(trump_tweets)['no_mentions'], feature_extraction.extract_features(general_tweets)['no_mentions']], vert=False, labels=["Trump", "Chump"])
+
+# number of punctuation boxplots
 plt.boxplot(x=[trump_features['no_punctuation'], chump_features['no_punctuation']], vert=False, labels=["Trump", "Chump"])
+plt.title("Number of Punctuation Characters per Tweet")
 
 # number of mentions histogram
 # plt.hist(x=feature_extraction.extract_features(trump_tweets)['no_mentions'], bins=range(50), color='#FF00007F', log=True)
