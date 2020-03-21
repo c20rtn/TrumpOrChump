@@ -70,8 +70,10 @@ for i in range(5):
     # model = svm(joined_train, y_train)
     # model = mlp(joined_train, y_train)
 
-    y_pred = model.predict(X_test)
-
+    y_pred = model.predict(joined_test)
+    # y_pred_proba = model.predict_proba(joined_test)
+    # print(y_pred_proba)
+    # print(y_pred)
 
     # ACCURACY MEASURES
     from sklearn.metrics import confusion_matrix, accuracy_score
