@@ -32,6 +32,7 @@ def logistic_regression(X_train, y_train, folds):
     lr_model = LogisticRegressionCV(cv=folds,
                                     random_state=0,
                                     max_iter=5000)
+    print(f"Training model with {folds}-fold cross validation")
     return lr_model.fit(X_train, y_train)
 
 
@@ -42,6 +43,7 @@ def naive_bayes(X_train, y_train, folds):
 
     nb_model = MultinomialNB()
     nb_cc = CalibratedClassifierCV(nb_model, cv=folds)
+    print(f"Training model with {folds}-fold cross validation")
     return nb_cc.fit(X_train, y_train)
 
 
@@ -54,6 +56,7 @@ def svm(X_train, y_train, folds):
                           tol=1e-04,
                           max_iter=5000)
     svc_cc = CalibratedClassifierCV(svc_model, cv=folds)
+    print(f"Training model with {folds}-fold cross validation")
     return svc_cc.fit(X_train, y_train)
 
 
@@ -71,4 +74,5 @@ def mlp(X_train, y_train):
                               verbose=True,
                               learning_rate_init=0.01,
                               batch_size=500)
+    print("Training model")
     return batch_fit(mlp_model, X_train, y_train)

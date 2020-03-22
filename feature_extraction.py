@@ -152,21 +152,23 @@ def extract_text_features(X_train, X_test, column_name, include_urls=True):
     # produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
 
     print("Setting stopwords")
-    stopWords = set(stopwords.words('english'))
+    stop_words = set(stopwords.words('english'))
 
     class LemmaTokenizer(object):
         def __init__(self):
             self.wnl = WordNetLemmatizer()
 
         def __call__(self, articles):
-            return [self.wnl.lemmatize(t) for t in word_tokenize(articles) if t not in stopWords]
+            return [self.wnl.lemmatize(t) for t in word_tokenize(articles) if t not in stop_words]
 
-    print("Count Vectorizer")
+    print("Creating count vectorizer")
     count_vect = CountVectorizer(tokenizer=LemmaTokenizer(),
                                  strip_accents='unicode',
                                  lowercase=True)
+    print("Fitting count vectorizer")
     counts = count_vect.fit_transform(X_train[column_name])
 
+    print("Calculating term relevance")
     # divides occurrences by number of words in tweet
     tfidf_transformer = TfidfTransformer(use_idf=False)
 

@@ -27,7 +27,7 @@ model_metrics = pd.DataFrame(
 
 
 def batch_predict(model, X_test):
-    print("Predict model")
+    print("Evaluating model performance")
     X_test = X_test.tocsr()
     y_pred = []
     y_pred_proba = []
@@ -48,18 +48,10 @@ def batch_predict(model, X_test):
 
 
 def run_learning_for_model(model_name, metrics):
-    accuracies = []
-    cms = []
-    recalls = []
-    precisions = []
-    f1s = []
-    aucs = []
-    fprs = []
-    tprs = []
+    print('\n', ''"Running", model_name)
 
+    print("Splitting data into train and test sets")
     # split dataset into train and test datasets
-    # dataset = dataset.sample(frac=1)
-    # print(dataset)
     X_train, X_test, y_train, y_test = train_test_split(dataset[['favorite_count', 'is_quote_status', 'retweet_count',
                                                                  'source', 'text', 'hashtags', 'symbols',
                                                                  'user_mentions', 'media']], dataset['label'],
@@ -73,14 +65,17 @@ def run_learning_for_model(model_name, metrics):
     X_train = create_column_with_text_without_mentions(X_train)
     X_test = create_column_with_text_without_mentions(X_test)
 
+    print("Extracting text features")
     # TEXT EXTRACTION
     X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text', False)
     # X_train_tf, X_test_tf = extract_text_features(X_train, X_test, 'text_without_mentions')
 
+    print("Extracting other features")
     # EXTRACT FEATURES
     X_train = extract_features(X_train)
     X_test = extract_features(X_test)
 
+    print("Scaling data")
     # DATA SCALING
     from sklearn.preprocessing import MinMaxScaler
 
@@ -89,6 +84,7 @@ def run_learning_for_model(model_name, metrics):
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
 
+    print("Combining features")
     # JOIN SCALED FEATURES AND TEXT MEASURES
     from scipy import sparse
 
@@ -98,8 +94,7 @@ def run_learning_for_model(model_name, metrics):
     # RUN TRAINING
     from models import logistic_regression, naive_bayes, svm, mlp
 
-    print("Instantiate model")
-
+    print("Instantiating model")
     if model_name == 'Logistic Regression':
         model = logistic_regression(joined_train, y_train, folds)
         y_pred, y_pred_proba = predict_model(model, joined_test)
@@ -117,19 +112,17 @@ def run_learning_for_model(model_name, metrics):
         y_pred, y_pred_proba = predict_model(model, joined_test)
         metrics = measurements(y_test, y_pred, y_pred_proba, model_name, metrics)
 
-    print_metrics(metrics)
+    return metrics
 
 
 def predict_model(model, X_test):
-    print("Predict model")
+    print("Evaluating model performance")
     y_pred = model.predict(X_test)
     y_pred_proba = model.predict_proba(X_test)
     return y_pred, y_pred_proba
 
 
 def measurements(y_test, y_pred, y_pred_proba, model_name, metrics):
-    # MEASUREMENTS
-    print("Collecting Measurements")
     y_pred_proba = y_pred_proba[:, 1]
 
     accuracy = accuracy_score(y_test, y_pred)
@@ -153,19 +146,21 @@ def measurements(y_test, y_pred, y_pred_proba, model_name, metrics):
 
 
 def print_metrics(metrics):
+    print("Measured metrics")
     print(metrics[['Model Name', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'Confusion Matrix', 'AUC']])
 
     for index, row in metrics.iterrows():
         plt.plot(row['FPR'], row['TPR'], label=f"{row['Model Name']} AUC = {round(row['AUC'], 5)}")
 
 
-model_names = ['Logistic Regression', 'Naive Bayes', 'SVM']
+model_names = ['Naive Bayes', 'SVM']
 folds = 5
-# for model_name in model_names:
-#     print("Runs for:", model_name, '\n')
-#     run_learning_for_model(model_name, model_metrics)
+for model_name in model_names:
+    model_metrics = run_learning_for_model(model_name, model_metrics)
 
-run_learning_for_model('Naive Bayes', model_metrics)
+print_metrics(model_metrics)
+
+# run_learning_for_model('Naive Bayes', model_metrics)
 
 plt.title(f"Best ROC Curve After {folds}-fold Cross Validation")
 plt.xlabel("False Positive Rate")
