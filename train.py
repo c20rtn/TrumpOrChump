@@ -1,9 +1,9 @@
 import pandas as pd
 from feature_extraction import extract_features, extract_text_features, create_column_with_text_without_mentions
 from sklearn.model_selection import train_test_split
-import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_curve, auc, recall_score, precision_score, f1_score
+from joblib import dump
 
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
@@ -26,29 +26,8 @@ model_metrics = pd.DataFrame(
     columns=['Model Name', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'Confusion Matrix', 'FPR', 'TPR', 'AUC'])
 
 
-def batch_predict(model, X_test):
-    print("Evaluating model performance")
-    X_test = X_test.tocsr()
-    y_pred = []
-    y_pred_proba = []
-    rows = X_test.shape[0]
-    prev_j = 0
-    for j in range(1000, rows, 1000):
-        X_test_batch = X_test[prev_j:j]
-        y_pred.extend(model.predict(X_test_batch.toarray()))
-        y_pred_proba.extend(model.predict_proba(X_test_batch.toarray()))
-        prev_j = j
-
-    if prev_j < rows:
-        X_test_batch = X_test[prev_j:]
-        y_pred.extend(model.predict(X_test_batch.toarray()))
-        y_pred_proba.extend(model.predict_proba(X_test_batch.toarray()))
-
-    return y_pred, np.array(y_pred_proba)
-
-
 def run_learning_for_model(model_name, metrics):
-    print('\n', ''"Running", model_name)
+    print("Running", model_name)
 
     print("Splitting data into train and test sets")
     # split dataset into train and test datasets
@@ -97,18 +76,22 @@ def run_learning_for_model(model_name, metrics):
     print("Instantiating model")
     if model_name == 'Logistic Regression':
         model = logistic_regression(joined_train, y_train, folds)
+        dump(model, f"{model_name}-{folds}-folds.joblib")
         y_pred, y_pred_proba = predict_model(model, joined_test)
         metrics = measurements(y_test, y_pred, y_pred_proba, model_name, metrics)
     elif model_name == 'Naive Bayes':
         model = naive_bayes(joined_train, y_train, folds)
-        y_pred, y_pred_proba = batch_predict(model, joined_test)
+        dump(model, f"{model_name}-{folds}-folds.joblib")
+        y_pred, y_pred_proba = predict_model(model, joined_test)
         metrics = measurements(y_test, y_pred, y_pred_proba, model_name, metrics)
     elif model_name == 'SVM':
         model = svm(joined_train, y_train, folds)
+        dump(model, f"{model_name}-{folds}-folds.joblib")
         y_pred, y_pred_proba = predict_model(model, joined_test)
         metrics = measurements(y_test, y_pred, y_pred_proba, model_name, metrics)
     elif model_name == 'MLP':
-        model = mlp(joined_train, y_train)
+        model = mlp(joined_train, y_train, folds)
+        dump(model, f"{model_name}-{folds}-folds.joblib")
         y_pred, y_pred_proba = predict_model(model, joined_test)
         metrics = measurements(y_test, y_pred, y_pred_proba, model_name, metrics)
 
@@ -116,7 +99,7 @@ def run_learning_for_model(model_name, metrics):
 
 
 def predict_model(model, X_test):
-    print("Evaluating model performance")
+    print("Evaluating model performance", '\n')
     y_pred = model.predict(X_test)
     y_pred_proba = model.predict_proba(X_test)
     return y_pred, y_pred_proba
@@ -125,23 +108,17 @@ def predict_model(model, X_test):
 def measurements(y_test, y_pred, y_pred_proba, model_name, metrics):
     y_pred_proba = y_pred_proba[:, 1]
 
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
     fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba, pos_label=1)
-    auc_score = auc(fpr, tpr)
 
     return metrics.append({'Model Name': model_name,
-                           'Accuracy': accuracy,
-                           'Precision': precision,
-                           'Recall': recall,
-                           'F1 Score': f1,
-                           'Confusion Matrix': cm,
+                           'Accuracy': accuracy_score(y_test, y_pred),
+                           'Precision': precision_score(y_test, y_pred),
+                           'Recall': recall_score(y_test, y_pred),
+                           'F1 Score': f1_score(y_test, y_pred),
+                           'Confusion Matrix': confusion_matrix(y_test, y_pred),
                            'FPR': fpr,
                            'TPR': tpr,
-                           'AUC': auc_score},
+                           'AUC': auc(fpr, tpr)},
                           ignore_index=True)
 
 
@@ -153,19 +130,23 @@ def print_metrics(metrics):
         plt.plot(row['FPR'], row['TPR'], label=f"{row['Model Name']} AUC = {round(row['AUC'], 5)}")
 
 
-model_names = ['Naive Bayes', 'SVM']
-folds = 5
+model_names = ['Logistic Regression', 'Naive Bayes', 'SVM', 'MLP']
+folds = 3
 for model_name in model_names:
     model_metrics = run_learning_for_model(model_name, model_metrics)
 
 print_metrics(model_metrics)
 
-# run_learning_for_model('Naive Bayes', model_metrics)
-
-plt.title(f"Best ROC Curve After {folds}-fold Cross Validation")
+if folds == 1:
+    plt.title("ROC Curve")
+else:
+    plt.title(f"ROC Curve After {folds}-fold Cross Validation")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.legend()
+fig = plt.gcf()
+fig.set_size_inches(8, 6)
+plt.savefig(f"ROC-curve-{folds}-folds.png", dpi=100)
 plt.show()
 
 pd.reset_option('display.max_colwidth')
