@@ -8,6 +8,7 @@ punctuation_regex = re.compile('[^\w #]')
 url_regex_string = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 url_regex = re.compile(url_regex_string)
 
+
 def average_word_length(sentence):
     words = words_regex.findall(sentence)
     if len(words) == 0:
@@ -15,21 +16,26 @@ def average_word_length(sentence):
 
     return sum(len(word) for word in words) / len(words)
 
+
 def media_length(x):
     if x is None:
         return 0.0
     else:
         return len(x)
 
+
 def create_column_with_text_without_mentions(dataset):
     return dataset.assign(text_without_mentions=dataset['text'].apply(remove_mentions))
+
 
 def remove_mentions(text):
     return re.sub(pattern='@\w+', string=text, repl="")
 
+
 def count_each_punctuation(text):
     counts = collections.Counter(text)
     return {k: v for k, v in counts.items() if k in string.punctuation}
+
 
 def count_punctuation(text, emojis=True):
     if not emojis:
@@ -37,12 +43,15 @@ def count_punctuation(text, emojis=True):
     punctuation = punctuation_regex.findall(text)
     return len(punctuation)
 
+
 def count_urls(text):
     urls = url_regex.findall(text)
     return len(urls)
 
+
 def remove_urls(text):
     return re.sub(pattern=url_regex_string, string=text, repl="")
+
 
 def extract_features(dataset, drop_length=True):
     # get all tweet sources as a list
@@ -93,7 +102,8 @@ def extract_features(dataset, drop_length=True):
     # 86.3  (urls, no no_urls, no_pun, pun_counts),         91.4    (no urls, no no_urls, no_pun, pun_counts)
 
     # columns that should be kept [['is_quote_status', 'source', 'no_hashtags', 'no_mentions', 'no_media', 'avg_word_length', 'no_punctuation']]
-    columns_to_drop=['favorite_count', 'retweet_count', 'text', 'text_without_mentions', 'user_mentions', 'media', 'hashtags', 'symbols']
+    columns_to_drop = ['favorite_count', 'retweet_count', 'text', 'text_without_mentions', 'user_mentions', 'media',
+                       'hashtags', 'symbols']
 
     if drop_length:
         columns_to_drop.append('length')
@@ -101,9 +111,8 @@ def extract_features(dataset, drop_length=True):
     return dataset.drop(columns=columns_to_drop)
 
 
-def extract_text_features(X_train, X_test, column_name, include_urls = True):
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.feature_extraction.text import TfidfTransformer
+def extract_text_features(X_train, X_test, column_name, include_urls=True):
+    from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
     import nltk
     from nltk import word_tokenize
     from nltk.corpus import stopwords
@@ -141,10 +150,10 @@ def extract_text_features(X_train, X_test, column_name, include_urls = True):
 
     # preprocess, tokenize and filter stopwords and produce bag of words from tweet text
     # produces sparse matrix, where each row represents a tweet and the given tweets word occurrences
-    
+
     print("Setting stopwords")
     stopWords = set(stopwords.words('english'))
-    
+
     class LemmaTokenizer(object):
         def __init__(self):
             self.wnl = WordNetLemmatizer()
@@ -153,12 +162,9 @@ def extract_text_features(X_train, X_test, column_name, include_urls = True):
             return [self.wnl.lemmatize(t) for t in word_tokenize(articles) if t not in stopWords]
 
     print("Count Vectorizer")
-    count_vect = CountVectorizer(
-                                tokenizer=LemmaTokenizer(),
-                                strip_accents='unicode',
-                                #stop_words='english',
-                                lowercase=True
-    )
+    count_vect = CountVectorizer(tokenizer=LemmaTokenizer(),
+                                 strip_accents='unicode',
+                                 lowercase=True)
     counts = count_vect.fit_transform(X_train[column_name])
 
     # divides occurrences by number of words in tweet
