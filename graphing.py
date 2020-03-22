@@ -78,13 +78,14 @@ def number_of_mentions_histogram(log=False):
     plt.legend()
 
 
+def bar_heights(dataset, columns):
+    return list(map(lambda column: dataset[column].mean(), columns))
+
+
 def mean_punctuation_count_bar_chart():
     plt.title("Mean Punctuation Count Per Tweet")
     plt.xlabel("Punctuation Character")
     plt.ylabel("Mean Count of Punctuation (logarithmic)")
-
-    def bar_heights(dataset, punctuation_columns):
-        return list(map(lambda punctuation: dataset[punctuation].mean(), punctuation_columns))
 
     width = 0.4
 
@@ -96,6 +97,19 @@ def mean_punctuation_count_bar_chart():
 
     plt.legend()
 
+# requires retweet_count & favourite_count to not be dropped in feature extraction
+def mean_favourite_and_retweet_count_bar_chart():
+    plt.title("Mean Favourite Count and Retweet Count Per Tweet")
+    plt.ylabel("Mean Count")
+
+    width = 0.4
+    column_labels = ['favorite_count', 'retweet_count']
+
+    plt.bar(x=np.arange(len(column_labels)) - width/2, width=width, height=bar_heights(trump_features, column_labels), color='red', label='Trump')
+    plt.bar(x=np.arange(len(column_labels)) + width/2, width=width, height=bar_heights(chump_features, column_labels),tick_label=column_labels, color='blue', label='Chump')
+
+    plt.legend()
+
 
 # mean_punctuation_count_bar_chart()
 # number_of_mentions_histogram()
@@ -103,7 +117,8 @@ def mean_punctuation_count_bar_chart():
 # number_of_punctuation_characters_boxplots()
 # number_of_hashtags_histogram()
 # average_word_length_boxplots()
-tweet_length_boxplots()
+# tweet_length_boxplots()
+mean_favourite_and_retweet_count_bar_chart()
 
 fig = plt.gcf()
 fig.set_size_inches(8, 6)
