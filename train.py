@@ -22,6 +22,26 @@ dataset = pd.DataFrame()
 dataset = dataset.append(trump_tweets)
 dataset = dataset.append(general_tweets)
 
+def batch_predict(model, X_test):
+    print("Predict model")
+    X_test = X_test.tocsr()
+    y_pred = []
+    y_pred_proba = []
+    rows = X_test.shape[0]
+    prev_j = 0
+    for j in range(1000, rows, 1000):
+        X_test_batch = X_test[prev_j:j]
+        y_pred.extend(model.predict(X_test_batch.toarray()))
+        y_pred_proba.extend(model.predict_proba(X_test_batch.toarray()))
+        prev_j = j
+
+    if prev_j < rows:
+        X_test_batch = X_test[prev_j:]
+        y_pred.extend(model.predict(X_test_batch.toarray()))
+        y_pred_proba.extend(model.predict_proba(X_test_batch.toarray()))
+
+    return y_pred, np.array(y_pred_proba)
+
 
 def run_learning_for_model(model_name, repeats):
     accuracies = []
@@ -32,7 +52,6 @@ def run_learning_for_model(model_name, repeats):
     aucs = []
     fprs =[]
     tprs =[]
-    thresholdss = []
 
     for i in range(repeats):
         print("Run:", i + 1)
@@ -82,29 +101,30 @@ def run_learning_for_model(model_name, repeats):
         if model_name == 'logistic regression':
             model = logistic_regression(joined_train, y_train)
             y_pred, y_pred_proba = predict_model(model, joined_test)
-            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s, accuracies)
+            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s,
+                         accuracies, cms)
         elif model_name == 'naive bayes':
-            model = naive_bayes(X_train, y_train)
-            y_pred, y_pred_proba = predict_model(model, joined_test)
-            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s,
-                         accuracies)
+            model = naive_bayes(joined_train, y_train)
+            y_pred, y_pred_proba = batch_predict(model, joined_test)
+            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s,
+                         accuracies, cms)
         elif model_name == 'svm':
             model = svm(joined_train, y_train)
             y_pred, y_pred_proba = predict_model(model, joined_test)
-            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s,
-                         accuracies)
+            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s,
+                         accuracies, cms)
         elif model_name == 'calibrated classifier':
             model = calibrated_classifier(joined_train, y_train)
             y_pred, y_pred_proba = predict_model(model, joined_test)
-            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s,
-                         accuracies)
+            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s,
+                         accuracies, cms)
         elif model_name == 'mlp':
             model = mlp(joined_train, y_train)
             y_pred, y_pred_proba = predict_model(model, joined_test)
-            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s,
-                         accuracies)
+            measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s,
+                         accuracies, cms)
 
-    average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs, thresholdss)
+    average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs, model_name)
 
 
 def predict_model(model, X_test):
@@ -114,7 +134,7 @@ def predict_model(model, X_test):
     return y_pred, y_pred_proba
 
 
-def measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, recalls, precisions, f1s, accuracies):
+def measurements(y_test, y_pred, y_pred_proba, fprs, tprs, aucs, recalls, precisions, f1s, accuracies, cms):
     # MEASUREMENTS
     print("Collecting Measurements")
     y_pred_proba = y_pred_proba[:, 1]
@@ -122,7 +142,6 @@ def measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, re
     fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba, pos_label=1)
     fprs.append(fpr)
     tprs.append(tpr)
-    thresholdss.append(thresholds)
 
 
     auc_score = auc(fpr,tpr)
@@ -145,15 +164,15 @@ def measurements(y_test, y_pred, y_pred_proba, fprs, tprs, thresholdss, aucs, re
     accuracies.append(accuracy)
     # print("Accuracy:", accuracy, '\n')
 
-    # cm = confusion_matrix(y_test, y_pred)
-    # cms.append(cm)
+    cm = confusion_matrix(y_test, y_pred)
+    cms.append(cm)
     # print(cm)
 
     # print(cms)
     # print(accuracies)
 
 
-def average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs, thresholdss):
+def average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs, model_name):
     print("Average accuracy:", np.average(accuracies), '\n')
     print("Average recall:", np.average(recalls), '\n')
     print("Average precision:", np.average(precisions), '\n')
@@ -168,17 +187,16 @@ def average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs,
     avg_tpr = np.mean(tprs, axis=0)
     print("Average TPRs:", avg_tpr, '\n')
 
-    avg_threshold = np.mean(thresholdss, axis=0)
-    print("Average Thresholdss:", avg_threshold, '\n')
-
     plt.plot(avg_fpr, avg_tpr, label=f"{model_name} AUC = {round(avg_auc,5)}")
 
 
 model_names = ['logistic regression', 'calibrated classifier']
 repeats = 5
-for model_name in model_names:
-    print("Runs for:", model_name, '\n')
-    run_learning_for_model(model_name, repeats)
+# for model_name in model_names:
+#     print("Runs for:", model_name, '\n')
+#     run_learning_for_model(model_name, repeats)
+
+run_learning_for_model('logistic regression', 1)
 
 plt.title(f"Average ROC Curve For {repeats} Runs")
 plt.xlabel("Average False Positive Rate")
@@ -189,4 +207,3 @@ plt.show()
 
 pd.reset_option('display.max_colwidth')
 pd.reset_option('display.max_columns')
-
