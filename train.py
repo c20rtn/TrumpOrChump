@@ -79,12 +79,12 @@ def run_learning_for_model(model_name, repeats):
 
 
         # DATA SCALING
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.preprocessing import StandardScaler, Normalizer
 
-        scaler = StandardScaler()
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_test = scaler.transform(X_test)
+        normalizer = Normalizer()
+        normalizer.fit(X_train)
+        X_train = normalizer.transform(X_train)
+        X_test = normalizer.transform(X_test)
 
 
         # JOIN SCALED FEATURES AND TEXT MEASURES
@@ -190,13 +190,11 @@ def average_measurements(accuracies, recalls, precisions, f1s, aucs, fprs, tprs,
     plt.plot(avg_fpr, avg_tpr, label=f"{model_name} AUC = {round(avg_auc,5)}")
 
 
-model_names = ['logistic regression', 'calibrated classifier']
+model_names = ['logistic regression', 'naive bayes', 'calibrated classifier']
 repeats = 5
-# for model_name in model_names:
-#     print("Runs for:", model_name, '\n')
-#     run_learning_for_model(model_name, repeats)
-
-run_learning_for_model('logistic regression', 1)
+for model_name in model_names:
+    print("Runs for:", model_name, '\n')
+    run_learning_for_model(model_name, repeats)
 
 plt.title(f"Average ROC Curve For {repeats} Runs")
 plt.xlabel("Average False Positive Rate")

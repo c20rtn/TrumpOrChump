@@ -33,9 +33,9 @@ def logistic_regression(X_train, y_train):
 
 # NAIVE BAYES
 def naive_bayes(X_train, y_train):
-    from sklearn.naive_bayes import GaussianNB
+    from sklearn.naive_bayes import MultinomialNB
 
-    nb_model = GaussianNB()
+    nb_model = MultinomialNB()
     return batch_fit(nb_model, X_train, y_train)
 
 
