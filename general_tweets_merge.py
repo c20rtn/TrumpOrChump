@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
 import os
-from data_cleansing import cleanse_data, source_regex
+from data_cleansing import cleanse_data, extract_source
 
 # get the filenames of all of the general tweets dataset files
 tweets_filenames = glob.glob("Datasets/General Tweets/*.json")
@@ -31,7 +31,7 @@ general_tweets_full_df = cleanse_data(general_tweets_full_df)
 # sample 40000 tweets to roughly match the size of the trump tweets dataset
 general_tweets_df = general_tweets_full_df.sample(n=40000)
 # extract the tweet source from the HTML <a> tag it is stored in
-general_tweets_df.loc[:, 'source'] = general_tweets_df['source'].apply(source_regex)
+general_tweets_df.loc[:, 'source'] = general_tweets_df['source'].apply(extract_source)
 
 # store the finalised general tweets dataset
 general_tweets_df.to_json("Datasets/general_tweets.json", orient='records')

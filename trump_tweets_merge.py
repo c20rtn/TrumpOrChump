@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from data_cleansing import cleanse_data, source_regex
+from data_cleansing import cleanse_data, extract_source
 
 # read in the datasets (full trump tweets and truncated trump tweets)
 full_tweets_df = pd.read_json("Datasets/Trump Tweets/trumptweets.json", dtype={'id_str': str})
@@ -24,7 +24,7 @@ trump_tweets_full_df.to_json("Datasets/Full/trump_tweets_full.json", orient='rec
 # remove all irrelevant columns, non-english tweets and copyright withheld tweets
 trump_tweets_df = cleanse_data(trump_tweets_full_df)
 # extract the tweet source from the HTML <a> tag it is stored in
-trump_tweets_df.loc[:, 'source'] = trump_tweets_df['source'].apply(source_regex)
+trump_tweets_df.loc[:, 'source'] = trump_tweets_df['source'].apply(extract_source)
 
 # store the finalised trump tweets dataset
 trump_tweets_df.to_json("Datasets/trump_tweets.json", orient='records')
